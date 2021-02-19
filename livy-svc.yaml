@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: livy
+    meta.helm.sh/release-namespace: spark-clu
+  labels:
+    app.kubernetes.io/instance: livy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: livy
+    helm.sh/chart: livy-2.0.1
+    manager: Go-http-client
+    operation: Update
+    time: "2021-02-19T03:22:46Z"
+  name: livy-headless
+  namespace: spark-clu
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  selector:
+    app.kubernetes.io/instance: livy
+    app.kubernetes.io/name: livy
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: livy
+    meta.helm.sh/release-namespace: spark-clu
+  labels:
+    app.kubernetes.io/instance: livy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: livy
+    helm.sh/chart: livy-2.0.1
+  name: livy
+  namespace: spark-clu
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/instance: livy
+    app.kubernetes.io/name: livy
+  sessionAffinity: None
+  type: NodePort
