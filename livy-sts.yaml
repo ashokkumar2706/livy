@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    meta.helm.sh/release-name: livy
+    meta.helm.sh/release-namespace: spark-clu
+  generation: 1
+  labels:
+    app.kubernetes.io/instance: livy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: livy
+    helm.sh/chart: livy-2.0.1
+    manager: kube-controller-manager
+    operation: Update
+  name: livy
+  namespace: spark-clu
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: livy
+      app.kubernetes.io/name: livy
+  serviceName: livy-headless
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/instance: livy
+        app.kubernetes.io/name: livy
+    spec:
+      containers:
+      - env:
+        - name: LIVY_LIVY_REPL_JARS
+          value: local\:///opt/livy/repl_2.12-jars/commons-codec-1.9.jar,local\:///opt/livy/repl_2.12-jars/livy-core_2.12-0.8.0-incubating-SNAPSHOT.jar,local\:///opt/livy/repl_2.12-jars/livy-repl_2.12-0.8.0-incubating-SNAPSHOT.jar
+        - name: LIVY_LIVY_RSC_JARS
+          value: local\:///opt/livy/rsc-jars/livy-thriftserver-session-0.8.0-incubating-SNAPSHOT.jar,local\:///opt/livy/rsc-jars/netty-all-4.1.47.Final.jar,local\:///opt/livy/rsc-jars/asm-5.0.4.jar,local\:///opt/livy/rsc-jars/reflectasm-1.11.3.jar,local\:///opt/livy/rsc-jars/minlog-1.3.0.jar,local\:///opt/livy/rsc-jars/livy-rsc-0.8.0-incubating-SNAPSHOT.jar,local\:///opt/livy/rsc-jars/objenesis-2.5.1.jar,local\:///opt/livy/rsc-jars/livy-api-0.8.0-incubating-SNAPSHOT.jar
+        - name: LIVY_LIVY_SERVER_RECOVERY_MODE
+          value: recovery
+        - name: LIVY_LIVY_SERVER_RECOVERY_STATE0STORE
+          value: filesystem
+        - name: LIVY_LIVY_SERVER_RECOVERY_STATE0STORE_URL
+          value: file:///tmp/livy/store/state
+        - name: LIVY_LIVY_SERVER_SESSION_MAX0CREATION
+          value: "10"
+        - name: LIVY_LIVY_SERVER_SESSION_STATE0RETAIN_SEC
+          value: 12h
+        - name: LIVY_LIVY_UI_BASE1PATH
+        - name: LIVY_SPARK_EVENT1LOG_DIR
+          value: file:///tmp/history-server
+        - name: LIVY_SPARK_EVENT1LOG_ENABLED
+          value: "false"
+        - name: LIVY_SPARK_KUBERNETES_CONTAINER_IMAGE
+          value: sasnouskikh/livy-spark:0.8.0-incubating-spark_3.0.1_2.12-hadoop_3.2.0_cloud
+        - name: LIVY_SPARK_KUBERNETES_CONTAINER_IMAGE_PULL1POLICY
+          value: IfNotPresent
+        - name: LIVY_SPARK_KUBERNETES_DRIVER_ANNOTATION_CREATED0BY
+          value: livy
+        - name: LIVY_SPARK_KUBERNETES_DRIVER_LABEL_NAME
+          value: driver
+        - name: LIVY_SPARK_KUBERNETES_EXECUTOR_ANNOTATION_CREATED0BY
+          value: livy
+        - name: LIVY_SPARK_KUBERNETES_EXECUTOR_LABEL_NAME
+          value: executor
+        image: sasnouskikh/livy:0.8.0-incubating-spark_3.0.1_2.12-hadoop_3.2.0_cloud
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /version
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: livy
+        ports:
+        - containerPort: 8998
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /version
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/config/livy.conf
+          name: livy-conf-cm
+        - mountPath: /etc/secret/livy.conf
+          name: livy-conf-secret
+        - mountPath: /etc/config/livy-client.conf
+          name: livy-client-conf-cm
+        - mountPath: /etc/secret/livy-client.conf
+          name: livy-client-conf-secret
+        - mountPath: /etc/config/spark-defaults.conf
+          name: spark-defaults-conf-cm
+        - mountPath: /etc/secret/spark-defaults.conf
+          name: spark-defaults-conf-secret
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      volumes:
+      - emptyDir: {}
+        name: livy-store
+      - emptyDir: {}
+        name: livy-conf-cm
+      - emptyDir: {}
+        name: livy-conf-secret
+      - emptyDir: {}
+        name: spark-defaults-conf-cm
+      - emptyDir: {}
+        name: spark-defaults-conf-secret
+      - emptyDir: {}
+        name: livy-client-conf-cm
+      - emptyDir: {}
+        name: livy-client-conf-secret
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
